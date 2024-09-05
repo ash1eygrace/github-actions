@@ -25,3 +25,9 @@ jobs:
             issue_number: context.issue.number,
             body: ":smile: Hello from actions!"
           })
+
+    - name: Set environment variable for future steps
+      run: echo "COMMENT_DONE=true" >> $GITHUB_ENV
+
+    - name: Use the environment variable
+      run: echo "The comment was added: $COMMENT_DONE"
