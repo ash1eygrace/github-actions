@@ -1,27 +1,55 @@
-name: Comment on Issue Activity
+name: Track and Comment on Issue Field Changes
 
 on:
-  issue_comment:
-    types: [created]
   issues:
-    types: [opened, edited, reopened]
-
-permissions:
-  issues: write
+    types:
+      - edited
+      - commented
+  project_card:
+    types:
+      - moved
+      - created
+      - edited
 
 jobs:
-  add_comment:
+  track_changes:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Add comment to issue
+    - name: Get issue details
+      uses: actions/github-script@v6.3.0
+      id: get_issue
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const issue_number = context.issue.number;
+          
+          // Retrieve custom fields via Project V2 API (mock example)
+          const projectFields = {
+            status: "In Progress",  // Mocked value, replace with actual logic to fetch
+            priority: "High",
+            size: "Medium",
+            estimate: "5",
+            iteration: "Sprint 2",
+            startDate: "2024-09-01",
+            endDate: "2024-09-15"
+          };
+
+          return projectFields;
+
+    - name: Comment on issue if fields changed
       uses: actions/github-script@v6.3.0
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          github.rest.issues.createComment({
+          const issue_number = context.issue.number;
+          const { status, priority, size, estimate, iteration, startDate, endDate } = steps.get_issue.outputs;
+
+          const message = `Project fields updated:\n- Status: ${status}\n- Priority: ${priority}\n- Size: ${size}\n- Estimate: ${estimate}\n- Iteration: ${iteration}\n- Start Date: ${startDate}\n- End Date: ${endDate}`;
+
+          await github.rest.issues.createComment({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            issue_number: context.issue.number,
-            body: ":smile: Hello from actions!"
-          })
+            issue_number: issue_number,
+            body: message
+          });
