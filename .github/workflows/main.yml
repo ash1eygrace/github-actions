@@ -12,11 +12,11 @@ jobs:
 
     steps:
     - name: Add comment to issue
-      uses: actions/github-script@v6
+      uses: actions/github-script@v6.3.0
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          github.issues.createComment({
+          github.rest.issues.createComment({
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: context.issue.number,
