@@ -1,69 +1,58 @@
-name: Track and Comment on Issue Field Changes
+name: Auto Comment on Issue Changes
 
 on:
   issues:
     types:
+      - assigned
       - edited
       - commented
   project_card:
     types:
       - moved
-      - created
-      - edited
 
 jobs:
-  track_changes:
+  comment_on_issue:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Get issue details
-      uses: actions/github-script@v6.3.0
-      id: get_issue
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          // Extract the issue number
-          const issue_number = context.issue.number;
-
-          // Mocking project fields (you need to replace this with actual API calls to fetch project fields)
-          const projectFields = {
-            status: "In Progress", 
-            priority: "High",
-            size: "Medium",
-            estimate: "5",
-            iteration: "Sprint 2",
-            startDate: "2024-09-01",
-            endDate: "2024-09-15"
-          };
-
-          // Setting the outputs for the next step to access
-          return projectFields;
-
-    - name: Comment on issue if fields changed
+    - name: Check if status changed to In Progress
+      if: github.event_name == 'project_card' && github.event.project_card.column_name == 'In Progress'
       uses: actions/github-script@v6.3.0
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          // Extract the outputs from the previous step
-          const issue_number = context.issue.number;
-          const { status, priority, size, estimate, iteration, startDate, endDate } = steps.get_issue.outputs;
-
-          // Construct the comment message
-          const message = `
-            Project fields updated:
-            - Status: ${status}
-            - Priority: ${priority}
-            - Size: ${size}
-            - Estimate: ${estimate}
-            - Iteration: ${iteration}
-            - Start Date: ${startDate}
-            - End Date: ${endDate}
-          `;
-
-          // Add the comment to the issue
+          const issue_number = context.payload.project_card.content_url.split('/').pop();
           await github.rest.issues.createComment({
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: issue_number,
-            body: message
+            body: "The issue status has been changed to 'In Progress'."
+          });
+
+    - name: Comment when an assignee is added
+      if: github.event_name == 'issues' && github.event.action == 'assigned'
+      uses: actions/github-script@v6.3.0
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const assignee = github.event.assignee.login;
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: `The issue has been assigned to @${assignee}.`
+          });
+
+    - name: Comment when someone comments on the issue
+      if: github.event_name == 'issues' && github.event.action == 'commented'
+      uses: actions/github-script@v6.3.0
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const commenter = github.event.comment.user.login;
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: `@${commenter} commented on the issue: "${github.event.comment.body}"`
           });
