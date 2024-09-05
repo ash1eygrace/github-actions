@@ -22,11 +22,12 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
+          // Extract the issue number
           const issue_number = context.issue.number;
-          
-          // Retrieve custom fields via Project V2 API (mock example)
+
+          // Mocking project fields (you need to replace this with actual API calls to fetch project fields)
           const projectFields = {
-            status: "In Progress",  // Mocked value, replace with actual logic to fetch
+            status: "In Progress", 
             priority: "High",
             size: "Medium",
             estimate: "5",
@@ -35,6 +36,7 @@ jobs:
             endDate: "2024-09-15"
           };
 
+          // Setting the outputs for the next step to access
           return projectFields;
 
     - name: Comment on issue if fields changed
@@ -42,11 +44,23 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
+          // Extract the outputs from the previous step
           const issue_number = context.issue.number;
           const { status, priority, size, estimate, iteration, startDate, endDate } = steps.get_issue.outputs;
 
-          const message = `Project fields updated:\n- Status: ${status}\n- Priority: ${priority}\n- Size: ${size}\n- Estimate: ${estimate}\n- Iteration: ${iteration}\n- Start Date: ${startDate}\n- End Date: ${endDate}`;
+          // Construct the comment message
+          const message = `
+            Project fields updated:
+            - Status: ${status}
+            - Priority: ${priority}
+            - Size: ${size}
+            - Estimate: ${estimate}
+            - Iteration: ${iteration}
+            - Start Date: ${startDate}
+            - End Date: ${endDate}
+          `;
 
+          // Add the comment to the issue
           await github.rest.issues.createComment({
             owner: context.repo.owner,
             repo: context.repo.repo,
