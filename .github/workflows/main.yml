@@ -1,58 +1,35 @@
-name: Auto Comment on Issue Changes
+name: Comment on Status Change
 
 on:
-  issues:
-    types:
-      - assigned
-      - edited
-      - commented
   project_card:
     types:
       - moved
 
 jobs:
-  comment_on_issue:
+  comment_on_status_change:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Check if status changed to In Progress
-      if: github.event_name == 'project_card' && github.event.project_card.column_name == 'In Progress'
+    - name: Check if status has changed
       uses: actions/github-script@v6.3.0
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const issue_number = context.payload.project_card.content_url.split('/').pop();
+          const column_id = context.payload.project_card.column_id;
+          const issue_url = context.payload.project_card.content_url;
+          const issue_number = issue_url.split('/').pop();
+
+          // Get the column name (status)
+          const column = await github.rest.projects.getColumn({
+            column_id: column_id
+          });
+
+          const status = column.data.name;
+
+          // Comment on the issue with the new status
           await github.rest.issues.createComment({
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: issue_number,
-            body: "The issue status has been changed to 'In Progress'."
-          });
-
-    - name: Comment when an assignee is added
-      if: github.event_name == 'issues' && github.event.action == 'assigned'
-      uses: actions/github-script@v6.3.0
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const assignee = github.event.assignee.login;
-          await github.rest.issues.createComment({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: context.issue.number,
-            body: `The issue has been assigned to @${assignee}.`
-          });
-
-    - name: Comment when someone comments on the issue
-      if: github.event_name == 'issues' && github.event.action == 'commented'
-      uses: actions/github-script@v6.3.0
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const commenter = github.event.comment.user.login;
-          await github.rest.issues.createComment({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: context.issue.number,
-            body: `@${commenter} commented on the issue: "${github.event.comment.body}"`
+            body: `The issue status has been changed to "${status}".`
           });
