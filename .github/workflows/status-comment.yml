@@ -1,0 +1,35 @@
+name: Comment on Status Change
+
+on:
+  project_card:
+    types:
+      - moved
+
+jobs:
+  comment_on_status_change:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check if status has changed
+      uses: actions/github-script@v6.3.0
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const column_id = context.payload.project_card.column_id;
+          const issue_url = context.payload.project_card.content_url;
+          const issue_number = issue_url.split('/').pop();
+
+          // Get the column name (status)
+          const column = await github.rest.projects.getColumn({
+            column_id: column_id
+          });
+
+          const status = column.data.name;
+
+          // Comment on the issue with the new status
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: issue_number,
+            body: `The issue status has been changed to "${status}".`
+          });
