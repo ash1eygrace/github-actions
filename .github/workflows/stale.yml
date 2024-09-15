@@ -1,0 +1,24 @@
+name: Mark stale issues
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # Runs every 5 minutes to test
+
+jobs:
+  stale:
+
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+    - uses: actions/stale@v5
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        stale-issue-message: 'This issue has been automatically marked as stale due to inactivity for 5 days.'
+        stale-issue-label: 'stale'
+        days-before-stale: 5
+        operations-per-run: 30  # Adjust as needed
+        stale-pr-message: ''     # Empty to ignore PRs
+        stale-pr-label: ''       # Empty to ignore PRs
