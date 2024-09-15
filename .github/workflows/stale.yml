@@ -18,6 +18,7 @@ jobs:
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         stale-issue-message: 'This issue has been automatically marked as stale due to inactivity for 5 days.'
+        remove-stale-when-updated: true 
         stale-issue-label: 'stale'
         days-before-stale: 5
         operations-per-run: 30  # Adjust as needed
