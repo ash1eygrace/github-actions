@@ -21,5 +21,3 @@ jobs:
         stale-issue-label: 'stale'
         days-before-stale: 5
         operations-per-run: 30  # Adjust as needed
-        stale-pr-message: ''     # Empty to ignore PRs
-        stale-pr-label: 'ignore'
