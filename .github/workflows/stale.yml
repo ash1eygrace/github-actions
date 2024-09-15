@@ -2,7 +2,7 @@ name: Mark stale issues
 
 on:
   schedule:
-    - cron: '*/1 * * * *'  # Runs every 1 minutes to test
+    - cron: '*/5 * * * *'  # Runs every 5 minutes
 
 jobs:
   stale:
